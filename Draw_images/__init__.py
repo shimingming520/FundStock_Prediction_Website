@@ -1,0 +1,2 @@
+from Draw_images.show_dashboard import show_MA
+from Draw_images.show_fund_analysis import show_fund_analysis

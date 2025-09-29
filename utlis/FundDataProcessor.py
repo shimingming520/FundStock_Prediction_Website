@@ -52,7 +52,9 @@ class FundDataProcessor:
 
         # 1. 技术指标 - 使用向量化操作避免索引问题
         df['MA_5'] = df['单位净值'].rolling(window=5).mean()
+        df['MA_10'] = df['单位净值'].rolling(window=10).mean()
         df['MA_20'] = df['单位净值'].rolling(window=20).mean()
+        df['MA_30'] = df['单位净值'].rolling(window=30).mean()
         df['Volatility_5'] = df['日增长率'].rolling(window=5).std()
         df['Volatility_20'] = df['日增长率'].rolling(window=20).std()
 
@@ -149,7 +151,7 @@ class FundDataProcessor:
         # 选择最终特征列
         feature_columns = [
             '单位净值', '累计净值', '日增长率', '申购状态', '赎回状态', '分红送配',
-            'MA_5', 'MA_20', 'Volatility_5', 'Volatility_20', 'Momentum_5', 'Momentum_10',
+            'MA_5','MA_10', 'MA_20', 'MA_30', 'Volatility_5', 'Volatility_20', 'Momentum_5', 'Momentum_10',
             'RSI_14', 'BB_Middle', 'BB_Upper', 'BB_Lower', 'BB_Position',
             'Price_Rank_20', 'trading_status', 'abnormal_move',
             'return_1d', 'return_5d', 'return_20d', 'volatility_5d', 'volatility_20d',

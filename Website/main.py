@@ -1,17 +1,18 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from Draw_images.show_dashboard import show_MA
+from Draw_images.show_fund_analysis import show_fund_analysis
+from utlis.Get_fund_code_name import get_fund_code_name
+from utlis.Get_Lately_Data import Get_Lately_Data
 import yaml
 import streamlit as st
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
-import os
 import matplotlib
-matplotlib.use('TkAgg')  # 在导入pyplot之前设置后端
-import matplotlib.pyplot as plt
-import re
 import pandas as pd
-import altair as alt
-import plotly.graph_objects as go
-import plotly.express as px
-# from show_content.show_dashboard import show_dashboard
+matplotlib.use('TkAgg')  # 在导入pyplot之前设置后端
+import re
 
 class FundStockApp:
     def __init__(self):
@@ -79,86 +80,11 @@ class FundStockApp:
 
     def show_dashboard(self):
 
-        df = pd.read_csv(r"F:\PyCharm_Project\FundStock_Prediction_Website\Data\Funds\050026.csv")
-        df['净值日期'] = pd.to_datetime(df['净值日期'])
-
-        # # 方法3.1：使用Plotly Express
-        # fig = px.line(
-        #     df,
-        #     x='净值日期',
-        #     y='MA_5',
-        #     title='基金MA_5指标走势图',
-        #     labels={'净值日期': '日期', 'MA_5': 'MA_5指标'}
-        # )
-        #
-        # # 自定义样式
-        # fig.update_traces(
-        #     line=dict(color='red', width=3, dash='solid'),  # 颜色、宽度、线型
-        #     marker=dict(size=4)  # 数据点大小
-        # )
-        #
-        # fig.update_layout(
-        #     title_x=0.5,  # 标题居中
-        #     title_font_size=20,
-        #     xaxis_title='日期',
-        #     yaxis_title='MA_5值',
-        #     hovermode='x unified'  # 悬停模式
-        # )
-        #
-        # st.plotly_chart(fig, use_container_width=True)
-
-        # 方法3.2：使用Plotly Graph Objects（更精细控制）
-        fig2 = go.Figure()
-
-        fig2.add_trace(go.Scatter(
-            x=df['净值日期'],
-            y=df['MA_5'],
-            mode='lines',
-            name='MA_5',
-            line=dict(color='blue', width=1.5, dash='solid'),
-            hovertemplate='日期: %{x}<br>MA_5: %{y:.2f}<extra></extra>'
-        ))
-
-        fig2.update_layout(
-            title='基金MA_5指标走势图',
-            xaxis_title='日期',
-            yaxis_title='MA_5指标',
-            template='plotly_white',
-            hovermode='x unified'
-        )
-
-        # 修正属性名称：spikemode 而不是 spike_mode
-        fig2.update_xaxes(
-            showspikes=True,
-            spikecolor='black',
-            spikethickness=1,
-            spikedash='dot',
-            spikemode='across',  # 正确的属性名
-            spikesnap='cursor'
-        )
-
-        fig2.update_yaxes(
-            showspikes=True,
-            spikecolor='black',
-            spikethickness=1,
-            spikedash='dot',
-            spikemode='across',  # 正确的属性名
-            spikesnap='cursor'
-        )
-
-        st.plotly_chart(fig2, use_container_width=True)
-
-        # # 显示用户角色信息
-        # if self.is_super_admin():
-        #     st.success("🔧 您以超级管理员身份登录")
-        # elif self.has_role('editor'):
-        #     st.info("✏️ 您以编辑者身份登录")
-        # elif self.has_role('viewer'):
-        #     st.info("👀 您以查看者身份登录")
-
+        show_MA(r"F:\PyCharm_Project\FundStock_Prediction_Website\Data\Funds\050026.csv",'近1年')
     def show_prediction(self):
         st.title("智能预测")
         st.write("这里是智能预测页面")
+
 
     def show_stock_analysis(self):
         st.title("股票分析")
@@ -166,7 +92,55 @@ class FundStockApp:
 
     def show_fund_analysis(self):
         st.title("基金分析")
-        st.write("这里是基金分析页面")
+        fund_code_name_list = get_fund_code_name()
+        fund_code_name = st.selectbox(
+            "选择基金",
+            fund_code_name_list
+        )
+        if not fund_code_name:
+            st.info("请选择你需要观看的基金")
+            st.stop()
+        fund_code = fund_code_name.split("(代码:")[-1].replace(')','').strip()
+        fund_data_path = rf"../Data/Funds/{fund_code}.csv"
+        processed_df = pd.read_csv(fund_data_path)
+        max_value = processed_df['单位净值'].max()
+        min_value = processed_df['单位净值'].min()
+        now_value = processed_df['单位净值'].iloc[-1]
+
+        analysis_type = st.selectbox(
+            "选择分析类型",
+            ["移动平均线", "布林带分析", "RSI指标", "波动率分析", "动量分析", "综合技术分析"]
+        )
+        date_select = st.selectbox(
+            "时间类型选择",
+            ['自定义开始和结束','给定时间选择']
+        )
+        if date_select == '自定义开始和结束':
+            # 时间范围选择
+            col1, col2 = st.columns(2)
+            with col1:
+                start_date = st.date_input("开始日期",
+                                           value=processed_df['净值日期'].min(),min_value=processed_df['净值日期'].min(),max_value=processed_df['净值日期'].max())
+            with col2:
+                end_date = st.date_input("结束日期",
+                                         value=processed_df['净值日期'].max(),min_value=processed_df['净值日期'].min(),max_value=processed_df['净值日期'].max())
+            if start_date and end_date:
+                filtered_df = Get_Lately_Data(processed_df, start_date=start_date, end_date=end_date)
+                if len(filtered_df) == 0:
+                    st.info("选择时间范围无效")
+                    st.stop()
+        elif date_select == '给定时间选择':
+            Lately_data = st.selectbox(
+                "最近时间",
+                ['近1个月',"近3个月","近6个月","近1年","近3年","近5年","近10年",'成立以来']
+            )
+            if Lately_data:
+                filtered_df = Get_Lately_Data(processed_df, Lately_data)
+        else:
+            st.info("请选择时间类型")
+            st.stop()
+        show_fund_analysis(filtered_df,analysis_type=analysis_type,detail=f"最大净值:{max_value},最小净值:{min_value},当前净值:{now_value}")
+
 
     def show_settings(self):
         st.title("系统设置")

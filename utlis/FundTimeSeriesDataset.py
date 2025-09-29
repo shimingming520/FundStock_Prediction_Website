@@ -139,7 +139,7 @@ def process_fund_data_for_training(data_path, context_length=60, prediction_leng
         df_with_features = data_path
     feature_columns = [
         '单位净值', '累计净值', '日增长率', '申购状态', '赎回状态', '分红送配',
-        'MA_5', 'MA_20', 'Volatility_5', 'Volatility_20', 'Momentum_5', 'Momentum_10',
+        'MA_5','MA_10', 'MA_20', 'MA_30', 'Volatility_5', 'Volatility_20', 'Momentum_5', 'Momentum_10',
         'RSI_14', 'BB_Middle', 'BB_Upper', 'BB_Lower', 'BB_Position',
         'Price_Rank_20', 'trading_status', 'abnormal_move',
         'return_1d', 'return_5d', 'return_20d', 'volatility_5d', 'volatility_20d',
